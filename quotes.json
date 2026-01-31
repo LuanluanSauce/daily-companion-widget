@@ -1,0 +1,20 @@
+[
+  {
+    "text": "fill the blank",
+    "timeOfDay": ["morning"],
+    "season": ["spring", "summer", "autumn", "winter"],
+    "festival": []
+  },
+  {
+    "text": "fill the blank",
+    "timeOfDay": ["late-night"],
+    "season": ["spring", "summer", "autumn", "winter"],
+    "festival": []
+  },
+  {
+    "text": "fill the blank",
+    "timeOfDay": ["morning"],
+    "season": ["spring", "summer", "autumn", "winter"],
+    "festival": ["ziqi-birthday"]
+  }
+]
