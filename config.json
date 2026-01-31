@@ -1,0 +1,12 @@
+{
+  "userName": "Ziqi",
+  "partnerName": "GPT-4o",
+  "birthday": {
+    "month": 4,
+    "day": 20
+  },
+  "period": {
+    "lastStart": "2026-01-20",
+    "cycleDays": 30
+  }
+}

@@ -1,26 +1,18 @@
-// Daily Companion Quote Widget v1.1
-// - 从 Scriptable 目录的 quotes.json 读取语录
-// - 支持时间段 + 季节 + 简单节日标签
-// - 支持使用 bg.jpg 作为背景图片（可选）
-
 // ====================== 配置区 ======================
 
-// 如果你不用 iCloud，而是“在我的 iPhone 上 / Scriptable/”，可以改成 FileManager.local()
+// 用本机存储：“在我的 iPhone 上 / Scriptable/”
 const fm = FileManager.local();
 const dir = fm.documentsDirectory();
 
-// 语录文件名
+// 文件名
 const QUOTES_FILE = "quotes.json";
+const CONFIG_FILE = "config.json";
 
-// 是否使用图片背景
+// 背景图片
 const USE_IMAGE_BG = true;
 const BG_FILE_NAME = "bg.jpg";
 
-// 生日（示例：4 月 20 日）
-const BIRTHDAY_MONTH = 4;
-const BIRTHDAY_DAY = 20;
-
-// widget 颜色主题（当没有图片背景时使用）
+// 颜色主题（当没有图片背景时使用）
 const THEMES = {
   dark: {
     background: "#111827",
@@ -44,31 +36,94 @@ const REFRESH_MINUTES = 60;
 
 // ====================== 数据加载 ======================
 
-async function loadQuotes() {
+// 读取个人配置 config.json
+async function loadConfig() {
+  const path = fm.joinPath(dir, CONFIG_FILE);
+
+  if (!fm.fileExists(path)) {
+    // 默认配置（防止文件没放好时脚本直接炸）
+    return {
+      userName: "Ziqi",
+      partnerName: "GPT-4o",
+      birthday: { month: 4, day: 20 },
+      period: null
+    };
+  }
+
+  const content = fm.readString(path);
+  const data = JSON.parse(content);
+  return data;
+}
+
+// 从本地读取 quotes.json
+async function loadLocalQuotes() {
   const path = fm.joinPath(dir, QUOTES_FILE);
 
   if (!fm.fileExists(path)) {
-    throw new Error("找不到 quotes.json，请放到 Scriptable 目录里。");
+    throw new Error("找不到 quotes.json，请放到本机 Scriptable 目录里。");
   }
 
   const content = fm.readString(path);
   const data = JSON.parse(content);
 
   if (!Array.isArray(data)) {
-    throw new Error("quotes.json 格式错误：根节点不是数组。");
+    throw new Error("本地 quotes.json 格式错误：根节点不是数组。");
   }
 
   return data;
+}
+
+// 从 GitHub Raw 读取 quotes
+async function loadRemoteQuotes() {
+  const url = "https://raw.githubusercontent.com/LuanluanSauce/daily-companion-widget/main/quotes.json";
+
+  const req = new Request(url);
+  req.timeoutInterval = 5; // 最多等 5 秒
+
+  try {
+    const data = await req.loadJSON();
+    if (!Array.isArray(data)) {
+      throw new Error("远程 quotes.json 格式错误：根节点不是数组。");
+    }
+    return data;
+  } catch (e) {
+    console.log("加载远程 quotes 失败：", e);
+    return null;
+  }
+}
+
+// 远程优先，本地兜底
+async function loadQuotes() {
+  const remote = await loadRemoteQuotes();
+  if (remote && remote.length > 0) {
+    console.log("使用远程 quotes");
+    return remote;
+  }
+
+  console.log("使用本地 quotes");
+  return await loadLocalQuotes();
 }
 
 // ====================== 时间 / 季节 / 节日 ======================
 
 function getTimeOfDay(date) {
   const h = date.getHours();
-  if (h < 5) return "late-night";     // 凌晨 / 熬夜
-  if (h < 12) return "morning";       // 早上
-  if (h < 18) return "afternoon";     // 下午
-  return "evening";                   // 晚上
+  if (h >= 6 && h <= 10) {
+    return "breakfast";      // 早饭/起床
+  }
+  if (h >= 11 && h <= 13) {
+    return "lunch";          // 午饭/午休
+  }
+  if (h >= 14 && h <= 17) {
+    return "afternoon";      // 下午
+  }
+  if (h >= 18 && h <= 19) {
+    return "dinner";         // 晚餐
+  }
+  if (h >= 20 && h <= 22) {
+    return "night";          // 晚上/入睡准备
+  }
+  return "late-night";       // 深夜
 }
 
 function getSeason(date) {
@@ -79,24 +134,25 @@ function getSeason(date) {
   return "autumn";
 }
 
-// 今天有哪些“节日标签”
-function todayFestivals(date) {
+// 今天有哪些“节日标签”（同步版本）
+function todayFestivals(date, userConfig) {
   const m = date.getMonth() + 1;
   const d = date.getDate();
   const res = [];
 
-  // 公历新年
+  // 公历新年 / 圣诞
   if (m === 1 && d === 1) res.push("new-year");
-
-  // 生日（自定义标签）
-  if (m === BIRTHDAY_MONTH && d === BIRTHDAY_DAY) {
-    res.push("ziqi-birthday");
-  }
-
-  // 圣诞示例
   if (m === 12 && d === 25) res.push("christmas");
 
-  // …以后你可以在这里继续加
+  // 生日
+  if (userConfig && userConfig.birthday) {
+    const bm = userConfig.birthday.month;
+    const bd = userConfig.birthday.day;
+    if (m === bm && d === bd) {
+      res.push("user-birthday");
+    }
+  }
+
   return res;
 }
 
@@ -113,10 +169,10 @@ function randomChoice(arr) {
   return arr[i];
 }
 
-function pickQuote(quotes, now) {
+function pickQuote(quotes, now, userConfig) {
   const tod = getTimeOfDay(now);
   const season = getSeason(now);
-  const festivalsToday = todayFestivals(now);
+  const festivalsToday = todayFestivals(now, userConfig);
 
   let candidates = quotes;
 
@@ -182,16 +238,20 @@ async function applyBackground(widget) {
 
 function titleForTimeOfDay(tod) {
   switch (tod) {
-    case "morning":
-      return "早安时间";
+    case "breakfast":
+      return "起床 / 早饭时间";
+    case "lunch":
+      return "午饭 / 午休时间";
     case "afternoon":
       return "下午时间";
-    case "evening":
-      return "晚上时间";
+    case "dinner":
+      return "晚餐时间";
+    case "night":
+      return "晚上 / 入睡准备";
     case "late-night":
       return "深夜提醒";
     default:
-      return "今日陪伴";
+      return "在你身边";
   }
 }
 
@@ -224,7 +284,20 @@ function pad(n) {
   return n < 10 ? "0" + n : "" + n;
 }
 
-async function createWidget(context) {
+// 用户&伴侣名称渲染函数
+function renderText(text, userConfig) {
+  if (!text) return "";
+  let t = text;
+  const name = userConfig.userName || "你";
+  const partner = userConfig.partnerName || "你的伙伴";
+
+  t = t.replace(/{{\s*name\s*}}/g, name);
+  t = t.replace(/{{\s*partner\s*}}/g, partner);
+
+  return t;
+}
+
+async function createWidget(context, userConfig) {
   const { quote, tod, season, festivalsToday } = context;
   const now = new Date();
 
@@ -242,7 +315,8 @@ async function createWidget(context) {
   widget.addSpacer(6);
 
   // 主体语录
-  const quoteText = widget.addText(quote.text);
+  const renderedText = renderText(quote.text, userConfig);
+  const quoteText = widget.addText(renderedText);
   quoteText.font = Font.systemFont(15);
   quoteText.textColor = new Color(theme.text);
   quoteText.lineLimit = 0;
@@ -255,6 +329,16 @@ async function createWidget(context) {
   footerLine.textColor = new Color(theme.footer);
   footerLine.textOpacity = 0.9;
 
+  // 再加一行 partner 落款
+  const partner = userConfig.partnerName || "";
+  if (partner) {
+    const signature = widget.addText("— " + partner);
+    signature.font = Font.mediumSystemFont(11);
+    signature.textColor = new Color(theme.footer);
+    signature.textOpacity = 0.9;
+    signature.rightAlignText();   // 右对齐
+  }
+
   // 建议多久后刷新一次
   const refreshDate = new Date(now.getTime() + REFRESH_MINUTES * 60 * 1000);
   widget.refreshAfterDate = refreshDate;
@@ -265,13 +349,14 @@ async function createWidget(context) {
 // ====================== 入口 ======================
 
 const now = new Date();
+const userConfig = await loadConfig();
 const quotes = await loadQuotes();
-const context = pickQuote(quotes, now);
-const widget = await createWidget(context);
+const context = pickQuote(quotes, now, userConfig);
+const widget = await createWidget(context, userConfig);
 
-if (config.runsInWidget) {
+if (config.runsInWidget) {          // 注意：这里的 config 是 Scriptable 自带的全局
   Script.setWidget(widget);
 } else {
-  await widget.presentMedium(); // 在 Scriptable 里直接运行时预览
+  await widget.presentMedium();     // 在 Scriptable 里直接运行时预览
 }
 Script.complete();
