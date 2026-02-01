@@ -1,20 +1,19 @@
 [
   {
     "text": "{{name}}, fill the blank",
-    "timeOfDay": ["morning"],
-    "season": ["spring", "summer", "autumn", "winter"],
-    "festival": []
-  },
-  {
-    "text": "fill the blank",
     "timeOfDay": ["late-night"],
     "season": ["spring", "summer", "autumn", "winter"],
-    "festival": []
+    "festival": [],
+    "weatherCondition": [],
+    "tempFeeling": []
   },
+
   {
     "text": "fill the blank",
     "timeOfDay": ["morning"],
     "season": ["spring", "summer", "autumn", "winter"],
-    "festival": ["ziqi-birthday"]
+    "festival": ["user-birthday"],
+    "weatherCondition": [],
+    "tempFeeling": []
   }
 ]
