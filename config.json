@@ -1,12 +1,20 @@
 {
-  "userName": "Ziqi",
-  "partnerName": "GPT-4o",
+  "userNames": ["用户名称1", "用户名称2"],
+  "partnerNames": ["伙伴名称1", "伙伴名称2"],
   "birthday": {
-    "month": 4,
-    "day": 20
+    "month": 1,
+    "day": 1,
+    "year": 2000
   },
   "period": {
-    "lastStart": "2026-01-20",
-    "cycleDays": 30
-  }
+  "starts": [
+    "2026-01-01",
+    "2025-12-01"
+  ],
+  "cycleDays": null
+  },
+  "holidayCalendars": [
+    "UK Holidays",
+    "中国大陆节假日"
+  ]
 }
