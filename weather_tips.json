@@ -1,0 +1,134 @@
+[
+  {
+    "id": "morning-hot-1",
+    "text": "这是“早晨查询到体感较热”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，平均气温{{temp}}(°C)，是否使用、使用几个取决于你自己和你的伙伴。",
+    "tipMode": ["morning"],
+    "tempFeeling": ["hot"]
+  },
+
+  {
+    "id": "morning-warm-1",
+    "text": "这是“早晨查询到体感温暖”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，平均气温{{temp}}(°C)，是否使用、使用几个取决于你自己和你的伙伴。",
+    "tipMode": ["morning"],
+    "tempFeeling": ["warm"]
+  },
+
+  {
+    "id": "morning-cold-1",
+    "text": "这是“早晨查询到体感较冷”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，平均气温{{temp}}(°C)，是否使用、使用几个取决于你自己和你的伙伴。",
+    "tipMode": ["morning"],
+    "tempFeeling": ["cold"]
+  },
+
+  {
+    "id": "morning-very-cold-1",
+    "text": "这是“早晨查询到体感极冷”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，平均气温{{temp}}(°C)，是否使用、使用几个取决于你自己和你的伙伴。",
+    "tipMode": ["morning"],
+    "tempFeeling": ["very-cold"]
+  },
+
+  {
+    "id": "morning-sunny-1",
+    "text": "这是“早晨查询到天气为晴”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，文字形式的天气{{weather}}，平均气温{{temp}}(°C)，可以自由组合出一句适合早上的问候。",
+    "tipMode": ["morning"],
+    "weatherCondition": ["sunny"]
+  },
+
+  {
+    "id": "morning-cloudy-1",
+    "text": "这是“早晨查询到天气为多云/阴”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，文字形式的天气{{weather}}，平均气温{{temp}}(°C)，是否使用、使用几个取决于你自己和你的伙伴。",
+    "tipMode": ["morning"],
+    "weatherCondition": ["cloudy"]
+  },
+
+  {
+    "id": "morning-fog-1",
+    "text": "这是“早晨查询到有雾”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，文字形式的天气{{weather}}，平均气温{{temp}}(°C)，可以提示路面湿滑、能见度较低之类的小心事项。",
+    "tipMode": ["morning"],
+    "weatherCondition": ["fog"]
+  },
+
+  {
+    "id": "morning-rain-1",
+    "text": "这是“早晨查询到有雨”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，文字形式的天气{{weather}}，平均气温{{temp}}(°C)，可以提醒带伞、穿防水鞋等。",
+    "tipMode": ["morning"],
+    "weatherCondition": ["rain"]
+  },
+
+  {
+    "id": "morning-snow-1",
+    "text": "这是“早晨查询到下雪”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，文字形式的天气{{weather}}，平均气温{{temp}}(°C)，可以提醒保暖、路面打滑等。",
+    "tipMode": ["morning"],
+    "weatherCondition": ["snow"]
+  },
+
+  {
+    "id": "morning-thunder-1",
+    "text": "这是“早晨查询到有雷雨/雷阵雨”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，文字形式的天气{{weather}}，可以提醒远离空旷地带、注意电子设备防水等。",
+    "tipMode": ["morning"],
+    "weatherCondition": ["thunder"]
+  },
+
+  {
+    "id": "night-tomorrow-sunny-1",
+    "text": "这是“晚上查询到明天天气为晴”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，明天的天气{{weather}}，平均气温{{temp}}(°C)，适合在睡前和伙伴一起预告一个好天气的明天。",
+    "tipMode": ["night"],
+    "weatherCondition": ["sunny"]
+  },
+
+  {
+    "id": "night-tomorrow-cloudy-1",
+    "text": "这是“晚上查询到明天天气为多云/阴”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，明天的天气{{weather}}，平均气温{{temp}}(°C)，适合提醒第二天行程时带一件外套。",
+    "tipMode": ["night"],
+    "weatherCondition": ["cloudy"]
+  },
+
+  {
+    "id": "night-tomorrow-fog-1",
+    "text": "这是“晚上查询到明天有雾”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，明天的天气{{weather}}，平均气温{{temp}}(°C)，适合提醒第二天早起出门要留出更多时间。",
+    "tipMode": ["night"],
+    "weatherCondition": ["fog"]
+  },
+
+  {
+    "id": "night-tomorrow-rain-1",
+    "text": "这是“晚上查询到明天有雨”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，明天的天气{{weather}}，平均气温{{temp}}(°C)，可以提醒提前把伞放进包里、安排好不被雨打乱的小计划。",
+    "tipMode": ["night"],
+    "weatherCondition": ["rain"]
+  },
+
+  {
+    "id": "night-tomorrow-snow-1",
+    "text": "这是“晚上查询到明天下雪”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，明天的天气{{weather}}，平均气温{{temp}}(°C)，适合提醒换一双防滑的鞋、多穿一点再出门。",
+    "tipMode": ["night"],
+    "weatherCondition": ["snow"]
+  },
+
+  {
+    "id": "night-tomorrow-thunder-1",
+    "text": "这是“晚上查询到明天有雷雨/雷阵雨”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，明天的天气{{weather}}，平均气温{{temp}}(°C)，可以提醒第二天减少在室外久待、注意安全。",
+    "tipMode": ["night"],
+    "weatherCondition": ["thunder"]
+  },
+
+  {
+    "id": "daytime-period-now-1",
+    "text": "这是“白天来例假”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，是否使用、使用几个 取决于你自己和你的伙伴。",
+    "tipMode": ["daytime"],
+    "periodPhase": ["period-now"]
+  },
+
+  {
+    "id": "daytime-period-soon-1",
+    "text": "这是“白天快要来例假”模板：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，是否使用、使用几个 取决于你自己和你的伙伴。",
+    "tipMode": ["daytime"],
+    "periodPhase": ["period-soon"]
+  },
+
+  {
+    "id": "daytime-normal-1",
+    "text": "这是“白天非例假时段普通暖心小贴士”模板，关怀身心健康的小贴士：可用占位符：用户的名字{{name}}，伙伴的名字{{partner}}，是否使用、使用几个 取决于你自己和你的伙伴。",
+    "tipMode": ["daytime"],
+    "periodPhase": ["none"]
+  }
+]

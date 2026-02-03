@@ -1,7 +1,7 @@
 // ====================== 配置区 ======================
 
-// 用本机存储：“在我的 iPhone 上 / Scriptable/”
-const fm = FileManager.local();
+// 用 iCloud 存储：“iCloud Drive / Scriptable/”
+const fm = FileManager.iCloud();
 const dir = fm.documentsDirectory();
 
 // 文件名
@@ -54,6 +54,16 @@ function pad(n) {
   return n < 10 ? "0" + n : "" + n;
 }
 
+function ensureDownloaded(path) {
+  try {
+    if (fm.isFileDownloaded && !fm.isFileDownloaded(path)) {
+      fm.downloadFileFromiCloud(path);
+    }
+  } catch (e) {
+    // 老版本没有这俩 API 就当没事
+  }
+}
+
 // ====================== 配置加载 ======================
 
 // 读取个人配置 config.json（只读本地）
@@ -63,6 +73,8 @@ async function loadConfig() {
   if (!fm.fileExists(path)) {
     throw new Error("找不到 config.json，请在 Scriptable 目录里创建配置文件（可以参考 config.example.json）。");
   }
+
+  ensureDownloaded(path);
 
   const content = fm.readString(path);
   try {
@@ -476,8 +488,8 @@ function computeAnnivTimes(anniv, today) {
 // ====================== 选语录：主语录管线 ======================
 
 function pickMainQuote(quotes, now, userConfig) {
-  const tod = getTimeOfDay(now);
-  const season = getSeason(now);
+  const tod = getTimeOfDay(now);          // breakfast / lunch / afternoon / ...
+  const season = getSeason(now);          // spring / summer / autumn / winter
   const festivalsToday = todayFestivals(now, userConfig);
 
   if (!Array.isArray(quotes) || quotes.length === 0) {
@@ -506,10 +518,9 @@ function pickMainQuote(quotes, now, userConfig) {
     };
   }
 
-  // 2. 节日硬约束：
-  //    - festivalActive：有 festival 且与今天的 festivalsToday 有交集
-  //    - normal：压根没写 festival
-  //    - 写了 festival 但今天不匹配的 → 今天完全丢弃
+  // 2. 按“今天是不是它的节日”拆成两类：
+  //    - festivalActive：有 festival 且与今天 festivalsToday 有交集 → 只有今天会生效
+  //    - normal：完全没写 festival → 永远当普通语录
   const festivalActive = [];
   const normal = [];
 
@@ -518,76 +529,60 @@ function pickMainQuote(quotes, now, userConfig) {
     const matchFest = hasFest && arraysIntersect(q.festival, festivalsToday);
 
     if (matchFest) {
-      festivalActive.push(q);    // 只在“对应节日那天”可用
+      festivalActive.push(q);
     } else if (!hasFest) {
-      normal.push(q);            // 永远当普通语录
+      normal.push(q);
     } else {
-      // hasFest && !matchFest → festivalInactive，今天直接忽略
+      // hasFest && !matchFest → 今天不是它的节日，忽略
     }
   }
 
+  // 3. timeOfDay 过滤：不填 timeOfDay = 全天通用
   function filterByTod(list) {
     if (!list || list.length === 0) return [];
-
-    // 1. timeOfDay 匹配
-    let res = list.filter(q => {
+    return list.filter(q => {
       const qTod = Array.isArray(q.timeOfDay) ? q.timeOfDay : null;
       const todOk = !qTod || qTod.length === 0 || qTod.includes(tod);
       return todOk;
     });
-
-    return res;
   }
 
-  // 三个“候选池”：
-  // tier1: 节日 + time 匹配
-  // tier2: 非节日 + time 匹配
-  // tier3: 节日（忽略 time）
-  const tier1 = filterByTod(festivalActive);
-  const tier2 = filterByTod(normal);
-  const tier3 = festivalActive;
-  const tier4 = normal;
+  const festTod    = filterByTod(festivalActive); // 节日 + tod 匹配
+  const normalTod  = filterByTod(normal);         // 非节日 + tod 匹配
+  const seasonTod  = filterByTod(seasonEligible); // 整个当季 + tod 匹配（兜底用）
 
-  let chosenQuote = null;
+  let pool = [];
 
-  // 如果 tier1/2/3 里有内容，就按 3:1:2 权重在这三池中随机选一个池，再池内随机一条
-  const weightedPools = [];
-  if (tier1 && tier1.length > 0) {
-    weightedPools.push({ pool: tier1, weight: 3 });
-  }
-  if (tier2 && tier2.length > 0) {
-    weightedPools.push({ pool: tier2, weight: 1 });
-  }
-  if (tier3 && tier3.length > 0) {
-    weightedPools.push({ pool: tier3, weight: 2 });
-  }
-
-  if (weightedPools.length > 0) {
-    const totalWeight = weightedPools.reduce((sum, p) => sum + p.weight, 0);
-    let r = Math.random() * totalWeight;
-
-    let chosenPool = weightedPools[0].pool;
-    for (const p of weightedPools) {
-      if (r < p.weight) {
-        chosenPool = p.pool;
-        break;
+  if (festTod.length > 0) {
+    // ⬇️ 今天有“节日+tod 匹配”的语录 → 节日+普通混合
+    if (normalTod.length > 0) {
+      const weighted = [];
+      // 节日语录各放两份，普通语录各放一份 → 节日大约 2/3 概率、普通 1/3
+      for (const q of festTod) {
+        weighted.push(q, q);
       }
-      r -= p.weight;
-    }
-
-    chosenQuote = randomChoice(chosenPool);
-  } else {
-    // 上面三类都空：
-    //  - 说明今天不是节日，或者所有 timeOfDay 都对不上
-    // 兜底：
-    //  - 优先在 non-festival 当季全库里随机
-    //  - 再不行，就在当季全库随机
-    if (tier4 && tier4.length > 0) {
-      chosenQuote = randomChoice(tier4);
+      for (const q of normalTod) {
+        weighted.push(q);
+      }
+      pool = weighted;
     } else {
-      chosenQuote = randomChoice(seasonEligible);
+      // 只有节日语录匹配 tod → 只能全用节日语录
+      pool = festTod;
+    }
+  } else {
+    // ⬇️ 今天虽然可能是节日，但：
+    //    - 你没写对应 festival，或者
+    //    - 写了但是 timeOfDay 不匹配
+    // 那就当成普通日子：按 season + tod 正常选
+    if (seasonTod.length > 0) {
+      pool = seasonTod;
+    } else {
+      // 极端兜底：连 tod 也匹配不到，就在当季全库里随便选一条
+      pool = seasonEligible;
     }
   }
+
+  const chosenQuote = randomChoice(pool);
 
   return {
     quote: chosenQuote,
@@ -631,71 +626,69 @@ function pickWeatherTip(tips, now, tipMode, currentWeather, tomorrowWeather, per
   let weatherForTip = null;
 
   if (tipMode === "morning") {
-    // 早上：看“今天当前天气”
     weatherForTip = currentWeather || null;
     if (weatherForTip) {
       const tempTags = Array.isArray(weatherForTip.tempTags) ? weatherForTip.tempTags : [];
       const conditionTags = Array.isArray(weatherForTip.conditionTags) ? weatherForTip.conditionTags : [];
 
-      let filtered = candidates;
+      // 分别找“按天气现象命中的”和“按体感温度命中的”
+      const condMatches = conditionTags.length > 0
+        ? candidates.filter(t => {
+            const tc = Array.isArray(t.weatherCondition) ? t.weatherCondition : null;
+            return tc && arraysIntersect(tc, conditionTags);
+          })
+        : [];
 
-      if (conditionTags.length > 0) {
-        const condFiltered = filtered.filter(t => {
-          const tc = Array.isArray(t.weatherCondition) ? t.weatherCondition : null;
-          return tc && arraysIntersect(tc, conditionTags);
-        });
-        if (condFiltered.length > 0) {
-          filtered = condFiltered;
-        }
+      const tempMatches = tempTags.length > 0
+        ? candidates.filter(t => {
+            const tf = Array.isArray(t.tempFeeling) ? t.tempFeeling : null;
+            return tf && arraysIntersect(tf, tempTags);
+          })
+        : [];
+
+      let merged = [];
+      if (condMatches.length > 0) merged = merged.concat(condMatches);
+      if (tempMatches.length > 0) merged = merged.concat(tempMatches);
+
+      if (merged.length > 0) {
+        // 去重，避免某条同时满足两种标签时权重翻倍
+        const unique = [...new Set(merged)];
+        candidates = unique;
       }
-
-      if (tempTags.length > 0) {
-        const tempFiltered = filtered.filter(t => {
-          const tf = Array.isArray(t.tempFeeling) ? t.tempFeeling : null;
-          return tf && arraysIntersect(tf, tempTags);
-        });
-        if (tempFiltered.length > 0) {
-          filtered = tempFiltered;
-        }
-      }
-
-      candidates = filtered;
+      // 否则就保持原 candidates 不动，当成“天气条件没命中任何带标签的 tip”
     }
   } else if (tipMode === "night") {
-    // 晚上：优先看“明天天气”；如果没有，就不按天气筛，也不给 temp/weather
     if (tomorrowWeather) {
       weatherForTip = tomorrowWeather;
+      const tempTags = Array.isArray(tomorrowWeather.tempTags) ? tomorrowWeather.tempTags : [];
+      const conditionTags = Array.isArray(tomorrowWeather.conditionTags) ? tomorrowWeather.conditionTags : [];
 
-      const tempTags = Array.isArray(weatherForTip.tempTags) ? weatherForTip.tempTags : [];
-      const conditionTags = Array.isArray(weatherForTip.conditionTags) ? weatherForTip.conditionTags : [];
+      const condMatches = conditionTags.length > 0
+        ? candidates.filter(t => {
+            const tc = Array.isArray(t.weatherCondition) ? t.weatherCondition : null;
+            return tc && arraysIntersect(tc, conditionTags);
+          })
+        : [];
 
-      let filtered = candidates;
+      const tempMatches = tempTags.length > 0
+        ? candidates.filter(t => {
+            const tf = Array.isArray(t.tempFeeling) ? t.tempFeeling : null;
+            return tf && arraysIntersect(tf, tempTags);
+          })
+        : [];
 
-      if (conditionTags.length > 0) {
-        const condFiltered = filtered.filter(t => {
-          const tc = Array.isArray(t.weatherCondition) ? t.weatherCondition : null;
-          return tc && arraysIntersect(tc, conditionTags);
-        });
-        if (condFiltered.length > 0) {
-          filtered = condFiltered;
-        }
+      let merged = [];
+      if (condMatches.length > 0) merged = merged.concat(condMatches);
+      if (tempMatches.length > 0) merged = merged.concat(tempMatches);
+
+      if (merged.length > 0) {
+        const unique = [...new Set(merged)];
+        candidates = unique;
       }
-
-      if (tempTags.length > 0) {
-        const tempFiltered = filtered.filter(t => {
-          const tf = Array.isArray(t.tempFeeling) ? t.tempFeeling : null;
-          return tf && arraysIntersect(tf, tempTags);
-        });
-        if (tempFiltered.length > 0) {
-          filtered = tempFiltered;
-        }
-      }
-
-      candidates = filtered;
     } else {
-      weatherForTip = null; // 不注入温度/天气，避免误导
+      weatherForTip = null; // 拿不到明天气象时，不注入 temp / weather
     }
-  } else {
+  }else {
     // 活动时间：完全不看天气，用生理期状态挑“贴心小贴士”
     weatherForTip = currentWeather || null;
     const phase = periodInfo && periodInfo.phase ? periodInfo.phase : "none";
@@ -793,7 +786,7 @@ function renderText(text, userConfig, weather) {
 async function applyBackground(widget) {
   if (USE_IMAGE_BG) {
     const imgPath = fm.joinPath(dir, BG_FILE_NAME);
-
+    ensureDownloaded(imgPath);
     if (fm.fileExists(imgPath)) {
       const img = fm.readImage(imgPath);
       widget.backgroundImage = img;
