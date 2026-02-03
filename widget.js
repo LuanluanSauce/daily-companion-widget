@@ -256,20 +256,35 @@ function todayFestivals(date, userConfig) {
   const d = date.getDate();
   const res = [];
 
-  // ===== 1. 固定规则部分：新年 / 圣诞 / 生日 =====
-  if (m === 1 && d === 1)  res.push("new-year");
+  // ===== 1. 固定规则部分：新年 / 圣诞 =====
+  if (m === 1 && d === 1) res.push("new-year");
   if (m === 12 && d === 25) res.push("christmas");
 
-  if (userConfig && userConfig.birthday) {
-    const bm = userConfig.birthday.month;
-    const bd = userConfig.birthday.day;
-    if (bm && bd && m === bm && d === bd) {
-      res.push("user-birthday");
+  const cfg = userConfig || {};
+
+  // 小工具：给一个 {year,month,day} + tag，看今天是不是那一天，是就 push
+  function addFixedDateFestival(dateObj, tag) {
+    if (!dateObj || typeof dateObj !== "object") return;
+    const bm = dateObj.month;
+    const bd = dateObj.day;
+    if (!bm || !bd) return;
+    if (bm === m && bd === d && !res.includes(tag)) {
+      res.push(tag);
     }
   }
 
-  // ===== 2. 苹果日历里的节日 / 节气 =====
-  const calFestivals = festivalsFromAppleCalendar(date, userConfig);
+  // 2.1 用户生日（兼容旧字段 birthday）
+  const userBirthday = cfg.userBirthday || cfg.birthday || null;
+  addFixedDateFestival(userBirthday, "user-birthday");
+
+  // 2.2 伙伴生日
+  addFixedDateFestival(cfg.partnerBirthday, "partner-birthday");
+
+  // 2.3 纪念日（Anniversary）
+  addFixedDateFestival(cfg.Anniversary, "anniversary");
+
+  // ===== 3. 苹果日历里的节日 / 节气 =====
+  const calFestivals = festivalsFromAppleCalendar(date, cfg);
   for (const f of calFestivals) {
     if (!res.includes(f)) {
       res.push(f);
@@ -412,6 +427,8 @@ function computePeriodPhase(today, periodConfig) {
 
 // ====================== 年龄计算 ======================
 
+// ====================== 年龄计算 ======================
+
 function computeAge(birthday, today) {
   if (!birthday || typeof birthday !== "object") return null;
 
@@ -436,6 +453,24 @@ function computeAge(birthday, today) {
 
   if (age < 0 || age > 150) return null;
   return age;
+}
+
+// 1) 在一起几年（整数年数），用 computeAge 直接算就好：
+function computeAnnivYears(anniv, today) {
+  return computeAge(anniv, today);
+}
+
+// 2) 第几个某节日 / 第几个年份氛围：= 年数 + 1
+function computeAnnivTimes(anniv, today) {
+  const years = computeAnnivYears(anniv, today);
+  if (years === null) return null;
+
+  // 如果今天还没在一起（today < anniv），上面 years 本身就会是 null；
+  // 这里再保险一下也无妨：
+  const startDate = new Date(anniv.year, anniv.month - 1, anniv.day);
+  if (isNaN(startDate.getTime()) || today < startDate) return null;
+
+  return years + 1;
 }
 
 // ====================== 选语录：主语录管线 ======================
@@ -685,11 +720,10 @@ function renderText(text, userConfig, weather) {
   if (!text) return "";
   let t = text;
 
-  // 1. 名称池
+  // 名称池
   const userNames = Array.isArray(userConfig.userNames)
     ? userConfig.userNames
     : (userConfig.userName ? [userConfig.userName] : []);
-
   const partnerNames = Array.isArray(userConfig.partnerNames)
     ? userConfig.partnerNames
     : (userConfig.partnerName ? [userConfig.partnerName] : []);
@@ -700,15 +734,42 @@ function renderText(text, userConfig, weather) {
   t = t.replace(/{{\s*name\s*}}/g, name);
   t = t.replace(/{{\s*partner\s*}}/g, partner);
 
-  // 2. 年龄 {{age}}
-  const age = computeAge(userConfig.birthday, new Date());
-  if (age !== null) {
-    t = t.replace(/{{\s*age\s*}}/g, age.toString());
+  const today = new Date();
+
+  // 用户年龄：{{age}} / {{userAge}}
+  const userBirthday = userConfig.userBirthday || userConfig.birthday || null;
+  const userAge = computeAge(userBirthday, today);
+  if (userAge !== null) {
+    t = t.replace(/{{\s*(age|userAge)\s*}}/g, userAge.toString());
   } else {
-    t = t.replace(/{{\s*age\s*}}/g, "");
+    t = t.replace(/{{\s*(age|userAge)\s*}}/g, "");
   }
 
-  // 3. 温度 {{temp}}
+  // 伙伴年龄：{{partnerAge}}
+  const partnerAge = computeAge(userConfig.partnerBirthday, today);
+  if (partnerAge !== null) {
+    t = t.replace(/{{\s*partnerAge\s*}}/g, partnerAge.toString());
+  } else {
+    t = t.replace(/{{\s*partnerAge\s*}}/g, "");
+  }
+
+  // 在一起几年：{{annivYears}}
+  const annivYears = computeAnnivYears(userConfig.Anniversary, today);
+  if (annivYears !== null) {
+    t = t.replace(/{{\s*annivYears\s*}}/g, annivYears.toString());
+  } else {
+    t = t.replace(/{{\s*annivYears\s*}}/g, "");
+  }
+
+  // 第几次：{{annivTimes}} / {{annivAge}}（兼容两个名字）
+  const annivTimes = computeAnnivTimes(userConfig.Anniversary, today);
+  if (annivTimes !== null) {
+    t = t.replace(/{{\s*(annivTimes|annivAge)\s*}}/g, annivTimes.toString());
+  } else {
+    t = t.replace(/{{\s*(annivTimes|annivAge)\s*}}/g, "");
+  }
+
+  // {{temp}}
   if (weather && typeof weather.temp === "number") {
     const tempStr = Math.round(weather.temp).toString();
     t = t.replace(/{{\s*temp\s*}}/g, tempStr);
@@ -716,7 +777,7 @@ function renderText(text, userConfig, weather) {
     t = t.replace(/{{\s*temp\s*}}/g, "");
   }
 
-  // 4. 天气文字 {{weather}}
+  // {{weather}}
   if (weather && typeof weather.code === "number") {
     const wStr = weatherCodeToText(weather.code);
     t = t.replace(/{{\s*weather\s*}}/g, wStr);
@@ -826,7 +887,7 @@ async function createWidget(mainContext, userConfig, tipResult) {
     const tipRendered = renderText(
       weatherTip.text,
       userConfig,
-      weatherForTip || currentWeather
+      weatherForTip
     );
     const tipText = widget.addText(tipRendered);
     tipText.font = Font.systemFont(11);

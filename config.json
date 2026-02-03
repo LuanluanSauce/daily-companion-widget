@@ -1,7 +1,17 @@
 {
   "userNames": ["用户名称1", "用户名称2"],
   "partnerNames": ["伙伴名称1", "伙伴名称2"],
-  "birthday": {
+  "userBirthday": {
+    "month": 1,
+    "day": 1,
+    "year": 2000
+  },
+  "partnerBirthday": {
+    "month": 1,
+    "day": 1,
+    "year": 2000
+  },
+  "Anniversary": {
     "month": 1,
     "day": 1,
     "year": 2000
