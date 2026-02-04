@@ -519,93 +519,71 @@ function computeAnnivTimes(anniv, today) {
   return years + 1;
 }
 
-// ====================== 选语录：主语录管线 ======================
+// ====================== 选语录：主语录管线（VIP 通道修正版） ======================
 async function pickMainQuote(quotes, now, userConfig) {
   const tod = getTimeOfDay(now);
   const season = getSeason(now);
   
   const festivalsToday = await todayFestivals(now, userConfig);
-  
-  const isFestivalDay =
-    Array.isArray(festivalsToday) && festivalsToday.length > 0;
+  const isFestivalDay = Array.isArray(festivalsToday) && festivalsToday.length > 0;
 
   if (!Array.isArray(quotes) || quotes.length === 0) {
-    return {
-      quote: null,
-      tod,
-      season,
-      festivalsToday
-    };
+    return { quote: null, tod, season, festivalsToday };
   }
 
-  // 1. 季节过滤
-  const seasonEligible = quotes.filter(q => {
-    const qSeason = Array.isArray(q.season) ? q.season : null;
-    if (!qSeason || qSeason.length === 0) return true;
-    return qSeason.includes(season);
-  });
-
-  if (seasonEligible.length === 0) {
-    return {
-      quote: randomChoice(quotes),
-      tod,
-      season,
-      festivalsToday
-    };
-  }
-
-  // 2. 区分节日语录和普通语录
+  // 分类池子
   const festivalActive = [];
   const normal = [];
 
-  for (const q of seasonEligible) {
-    const hasFest = Array.isArray(q.festival) && q.festival.length > 0;
+  for (const q of quotes) {
+    const qFestivals = Array.isArray(q.festival) ? q.festival : [];
+    const qSeasons = Array.isArray(q.season) ? q.season : [];
+    const qTods = Array.isArray(q.timeOfDay) ? q.timeOfDay : [];
 
-    if (
-      isFestivalDay &&
-      hasFest &&
-      arraysIntersect(q.festival, festivalsToday)
-    ) {
-      festivalActive.push(q);
-    } else if (!hasFest) {
-      normal.push(q);
+    // === 逻辑修正点 ===
+    // 1. 先看节日 (VIP 通道) - 只要是节日，无视季节！
+    if (isFestivalDay && qFestivals.length > 0 && arraysIntersect(qFestivals, festivalsToday)) {
+      if (qTods.length === 0 || qTods.includes(tod)) {
+        festivalActive.push(q);
+      }
+      continue; 
+    }
+
+    // 2. 再看普通语录
+    if (qFestivals.length === 0) {
+      const seasonMatch = qSeasons.length === 0 || qSeasons.includes(season);
+      const todMatch = qTods.length === 0 || qTods.includes(tod);
+      if (seasonMatch && todMatch) {
+        normal.push(q);
+      }
     }
   }
-
-  // 3. 时段过滤
-  function filterByTod(list) {
-    if (!list || list.length === 0) return [];
-    return list.filter(q => {
-      const qTod = Array.isArray(q.timeOfDay) ? q.timeOfDay : null;
-      const todOk = !qTod || qTod.length === 0 || qTod.includes(tod);
-      return todOk;
-    });
-  }
-
-  const festTod = filterByTod(festivalActive);
-  const normalTod = filterByTod(normal);
 
   let pool = [];
 
-  // 4. 最终池子组装
-  if (festTod.length > 0) {
-    if (normalTod.length > 0) {
+  // 3. 组装池子
+  if (festivalActive.length > 0) {
+    // 节日语录放 20 份，确保霸屏
+    if (normal.length > 0) {
       const weighted = [];
-      for (const q of festTod) weighted.push(q, q); // 节日语录双倍权重
-      for (const q of normalTod) weighted.push(q);
+      for (const q of festivalActive) { 
+        for(let i=0; i<20; i++) weighted.push(q); 
+      }
+      for (const q of normal) { weighted.push(q); }
       pool = weighted;
     } else {
-      pool = festTod;
+      pool = festivalActive;
     }
   } else {
-    // 之前你的代码这里贴错了，请用这一段修正：
-    if (normalTod.length > 0) {
-      pool = normalTod;
-    } else if (normal.length > 0) {
-      pool = normal;
-    } else {
-      pool = seasonEligible;
-    }
+    pool = normal;
+  }
+  
+  // 兜底
+  if (pool.length === 0) {
+     pool = quotes.filter(q => {
+        const s = Array.isArray(q.season) ? q.season : [];
+        return s.length === 0 || s.includes(season);
+     });
   }
 
   const chosenQuote = randomChoice(pool);
@@ -617,7 +595,6 @@ async function pickMainQuote(quotes, now, userConfig) {
     festivalsToday
   };
 }
-
 
 // ====================== 选语录：天气 / 贴心小提示管线 ======================
 //
