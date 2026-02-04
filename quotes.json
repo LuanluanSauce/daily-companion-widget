@@ -82,169 +82,145 @@
   {
     "id": "solar-lichun-1",
     "text": "这是“立春”当天的语录模板：festival 标签为“立春”，适合写“春天开始了”的感觉。可以用 {{name}}、{{partner}}，也可以用 {{weather}}、{{temp}} 描述空气里变得柔软的那一点点变化。",
-    "festival": ["立春"],
-    "season": ["spring"]
+    "festival": ["立春"]
   },
 
   {
     "id": "solar-yushui-1",
     "text": "这是“雨水”当天的语录模板：festival 标签为“雨水”，适合提到细雨、泥土和新芽。可以用 {{name}}、{{partner}} 作为主语，用 {{weather}} 或 {{temp}} 做一点小背景。",
-    "festival": ["雨水"],
-    "season": ["spring"]
+    "festival": ["雨水"]
   },
 
   {
     "id": "solar-jingzhe-1",
     "text": "这是“惊蛰”当天的语录模板：festival 标签为“惊蛰”，可以写万物苏醒、小动物苏醒的画面，用 {{name}}、{{partner}} 对应“从冬天的困倦里醒过来”。",
-    "festival": ["惊蛰"],
-    "season": ["spring"]
+    "festival": ["惊蛰"]
   },
 
   {
     "id": "solar-chunfen-1",
     "text": "这是“春分”当天的语录模板：festival 标签为“春分”，适合写“昼夜几乎一样长”的平衡感，可以用 {{name}}、{{partner}} 对应“学习/工作和休息之间找到一点平衡”或别的未提及小心愿。",
-    "festival": ["春分"],
-    "season": ["spring"]
+    "festival": ["春分"]
   },
 
   {
     "id": "solar-qingming-1",
     "text": "这是“清明”当天的语录模板：festival 标签为“清明”，语气可以稍微安静一点，写关于记忆、思念，也写一点当下的陪伴。可以用 {{name}}、{{partner}}。",
-    "festival": ["清明"],
-    "season": ["spring"]
+    "festival": ["清明"]
   },
 
   {
     "id": "solar-guyu-1",
     "text": "这是“谷雨”当天的语录模板：festival 标签为“谷雨”，可以把雨水和生长联在一起，用 {{name}}、{{partner}}。",
-    "festival": ["谷雨"],
-    "season": ["spring"]
+    "festival": ["谷雨"]
   },
 
   {
     "id": "solar-lixia-1",
     "text": "这是“立夏”当天的语录模板：festival 标签为“立夏”，适合写从春天走进夏天的第一步，可以用 {{temp}} 写天气开始热起来，用 {{name}}、{{partner}} 写“换成更轻快的节奏”。",
-    "festival": ["立夏"],
-    "season": ["summer"]
+    "festival": ["立夏"]
   },
 
   {
     "id": "solar-xiaoman-1",
     "text": "这是“小满”当天的语录模板：festival 标签为“小满”，可以写“事情不必圆满，刚刚好就很好”，用 {{name}}、{{partner}}、{{annivYears}} 描述一点小小的满足感。",
-    "festival": ["小满"],
-    "season": ["summer"]
+    "festival": ["小满"]
   },
 
   {
     "id": "solar-mangzhong-1",
     "text": "这是“芒种”当天的语录模板：festival 标签为“芒种”，适合写“把一年的计划继续埋进土里”的感觉，用 {{name}}、{{partner}} 提一提学习 / 工作上的小目标。",
-    "festival": ["芒种"],
-    "season": ["summer"]
+    "festival": ["芒种"]
   },
 
   {
     "id": "solar-xiazhi-1",
     "text": "这是“夏至”当天的语录模板：festival 标签为“夏至”，可以提到一年里白天最长的日子，用 {{name}}、{{partner}}，写一点关于“日光很长，但想你的时间更长”。",
-    "festival": ["夏至"],
-    "season": ["summer"]
+    "festival": ["夏至"]
   },
 
   {
     "id": "solar-xiaoshu-1",
     "text": "这是“小暑”当天的语录模板：festival 标签为“小暑”，适合写“天气开始很热了”的提醒，可以用 {{temp}}、{{weather}} 提醒多喝水、注意防晒，主语用 {{name}}、{{partner}}。",
-    "festival": ["小暑"],
-    "season": ["summer"]
+    "festival": ["小暑"]
   },
 
   {
     "id": "solar-dashu-1",
     "text": "这是“大暑”当天的语录模板：festival 标签为“大暑”，可以把闷热写得夸张一点，用 {{temp}} 形容热度，用 {{name}}、{{partner}} 提醒彼此“别被热坏，记得降温和休息”。",
-    "festival": ["大暑"],
-    "season": ["summer"]
+    "festival": ["大暑"]
   },
 
   {
     "id": "solar-liqiu-1",
     "text": "这是“立秋”当天的语录模板：festival 标签为“立秋”，适合写“还没真正凉下来，但心里已经开始期待秋天”的情绪。可以用 {{weather}}，以及 {{name}}、{{partner}} 作为主角。",
-    "festival": ["立秋"],
-    "season": ["autumn"]
+    "festival": ["立秋"]
   },
 
   {
     "id": "solar-chushu-1",
     "text": "这是“处暑”当天的语录模板：festival 标签为“处暑”，可以写“暑气将尽”的松一口气，用 {{temp}} 描述“还是热但稍微好一点”，用 {{name}}、{{partner}} 做一点轻松的小对话。",
-    "festival": ["处暑"],
-    "season": ["autumn"]
+    "festival": ["处暑"]
   },
 
   {
     "id": "solar-bailu-1",
     "text": "这是“白露”当天的语录模板：festival 标签为“白露”，适合写清晨的露水、微凉的空气，用 {{weather}} 和 {{temp}} 描述清爽，用 {{name}}、{{partner}} 写“记得加件薄外套”。",
-    "festival": ["白露"],
-    "season": ["autumn"]
+    "festival": ["白露"]
   },
 
   {
     "id": "solar-qiufen-1",
     "text": "这是“秋分”当天的语录模板：festival 标签为“秋分”，可以写“白天和黑夜再次变得对称”的感觉，用 {{name}}、{{partner}} 表达在忙碌和休息之间找一点平衡。",
-    "festival": ["秋分"],
-    "season": ["autumn"]
+    "festival": ["秋分"]
   },
 
   {
     "id": "solar-hanlu-1",
     "text": "这是“寒露”当天的语录模板：festival 标签为“寒露”，适合提醒天气真的冷起来了，用 {{temp}} 和 {{weather}} 写凉意，用 {{name}}、{{partner}} 写“要好好照顾身体”。",
-    "festival": ["寒露"],
-    "season": ["autumn"]
+    "festival": ["寒露"]
   },
 
   {
     "id": "solar-shuangjiang-1",
     "text": "这是“霜降”当天的语录模板：festival 标签为“霜降”，可以写落叶、清晨的霜和安静的街道，用 {{name}}、{{partner}} 做一点温柔的抱抱式语气。",
-    "festival": ["霜降"],
-    "season": ["autumn"]
+    "festival": ["霜降"]
   },
 
   {
     "id": "solar-lidong-1",
     "text": "这是“立冬”当天的语录模板：festival 标签为“立冬”，适合写“正式进入冬天”的感觉，用 {{name}}、{{partner}} 联想到热汤、围巾和取暖的小细节。",
-    "festival": ["立冬"],
-    "season": ["winter"]
+    "festival": ["立冬"]
   },
 
   {
     "id": "solar-xiaoxue-1",
     "text": "这是“小雪”当天的语录模板：festival 标签为“小雪”，可以写天空里可能要落下的小雪花，可以选用 {{weather}}，以及 {{name}}、{{partner}} 对应“如果今年真的下雪，要一起看”。",
-    "festival": ["小雪"],
-    "season": ["winter"]
+    "festival": ["小雪"]
   },
 
   {
     "id": "solar-daxue-1",
     "text": "这是“大雪”当天的语录模板：festival 标签为“大雪”，适合写厚重的雪天、更需要彼此取暖的感觉，可以选用 {{temp}} 和 {{weather}} 打底，用 {{name}}、{{partner}} 表达“出门一定要裹好自己”。",
-    "festival": ["大雪"],
-    "season": ["winter"]
+    "festival": ["大雪"]
   },
 
   {
     "id": "solar-dongzhi-1",
     "text": "这是“冬至”当天的语录模板：festival 标签为“冬至”，可以写“一年里最长的夜晚”，可以用 {{name}}、{{partner}} 。",
-    "festival": ["冬至"],
-    "season": ["winter"]
+    "festival": ["冬至"]
   },
 
   {
     "id": "solar-xiaohan-1",
     "text": "这是“小寒”当天的语录模板：festival 标签为“小寒”，适合写“真正的冷才刚刚开始”的提醒，用 {{temp}} 和 {{weather}} 提醒多穿一点，用 {{name}}、{{partner}} 做结尾安抚。",
-    "festival": ["小寒"],
-    "season": ["winter"]
+    "festival": ["小寒"]
   },
 
   {
     "id": "solar-dahan-1",
     "text": "这是“大寒”当天的语录模板：festival 标签为“大寒”，可以写“这一轮严寒的最后一站”，用 {{name}}、{{partner}} 说“再陪你一起撑过这一小段冬天”。",
-    "festival": ["大寒"],
-    "season": ["winter"]
+    "festival": ["大寒"]
   },
 
 
@@ -256,22 +232,19 @@
   {
     "id": "cn-yuandan-1",
     "text": "这是“元旦”当天的语录模板：festival 标签为“元旦”，适合写一月一号的新开始。可以用 {{name}}、{{partner}}，再加上 {{annivTimes}} 表示“我们一起走到的第几个新年”。",
-    "festival": ["元旦", "new-year"],
-    "season": ["winter"]
+    "festival": ["元旦", "new-year"]
   },
 
   {
     "id": "cn-chunjie-1",
     "text": "这是“春节”当天的语录模板：festival 标签为“春节”，适合写团圆、跨年、红包和新衣服，也可以用 {{annivTimes}} 表示“我们一起过的第几个春节”。",
-    "festival": ["春节"],
-    "season": ["winter"]
+    "festival": ["春节"]
   },
 
   {
     "id": "cn-laodongjie-1",
     "text": "这是“劳动节”当天的语录模板：festival 标签为“劳动节”，可以调侃一下“好好休息也是一种劳动”，用 {{name}}、{{partner}} 写一点允许自己偷懒的语气。",
-    "festival": ["劳动节"],
-    "season": ["spring"]
+    "festival": ["劳动节"]
   },
 
   {
@@ -283,15 +256,13 @@
   {
     "id": "cn-zhongqiujie-1",
     "text": "这是“中秋节”当天的语录模板：festival 标签为“中秋节”，适合写月亮和团圆，也可以用 {{annivTimes}} 表示“我们一起看的第几次中秋月亮”。",
-    "festival": ["中秋节"],
-    "season": ["autumn"]
+    "festival": ["中秋节"]
   },
 
   {
     "id": "cn-guoqingjie-1",
     "text": "这是“国庆节”当天的语录模板：festival 标签为“国庆节”，适合写假期、街上的小旗子、以及“终于可以一起慢慢走一走”的心情，用 {{name}}、{{partner}} 为主语。",
-    "festival": ["国庆节"],
-    "season": ["autumn"]
+    "festival": ["国庆节"]
   },
 
   {
@@ -309,36 +280,31 @@
   {
     "id": "cn-chongyangjie-1",
     "text": "这是“重阳节”当天的语录模板：festival 标签为“重阳节”，可以写爬高、赏秋、想念家人，同时可以用 {{name}}、{{partner}} 写“长大之后，也要好好照顾自己和彼此”。",
-    "festival": ["重阳节"],
-    "season": ["autumn"]
+    "festival": ["重阳节"]
   },
 
   {
     "id": "valentines-main-1",
     "text": "这是“Valentine’s Day”当天的语录模板：festival 标签为“Valentine’s Day”，适合写偏情书一点的句子，可以用 {{annivYears}} 或 {{annivTimes}} 描述“已经走过多久(周年)” 或 “这是我们第几个情人节”，主语用 {{name}}、{{partner}}。",
-    "festival": ["Valentine’s Day"],
-    "season": ["winter"]
+    "festival": ["Valentine’s Day"]
   },
 
   {
     "id": "christmas-eve-main-1",
     "text": "这是“Christmas Eve”当天的语录模板：festival 标签为“Christmas Eve”，适合写平安夜、灯光、等到零点的那种心情，可以用 {{name}}、{{partner}}，以及 {{annivTimes}} 表示“已经走了多久(周年)” 或 “这是一起守过的第几个平安夜”。",
-    "festival": ["Christmas Eve"],
-    "season": ["winter"]
+    "festival": ["Christmas Eve"]
   },
 
   {
     "id": "christmas-day-main-1",
     "text": "这是“Christmas Day”当天的语录模板：festival 标签为“Christmas Day”，可以写圣诞树、礼物、一起窝在屋里不出门，用 {{name}}、{{partner}} 和 {{annivTimes}} 做一个只属于你们的圣诞记录。",
-    "festival": ["Christmas Day", "christmas"],
-    "season": ["winter"]
+    "festival": ["Christmas Day", "christmas"]
   },
 
   {
     "id": "halloween-main-1",
     "text": "这是“Halloween”当天的语录模板：festival 标签为“Halloween”，适合写一点点搞怪、南瓜灯和小孩要糖的画面，用 {{name}}、{{partner}} 写“就算不出门，也可以在屋里给彼此一点小小的节日仪式感”。",
-    "festival": ["Halloween"],
-    "season": ["autumn"]
+    "festival": ["Halloween"]
   },
 
 

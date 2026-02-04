@@ -1,3 +1,6 @@
+// Variables used by Scriptable.
+// These must be at the very top of the file. Do not edit.
+// icon-color: deep-blue; icon-glyph: magic;
 // ====================== 配置区 ======================
 
 // 用 iCloud 存储：“iCloud Drive / Scriptable/”
@@ -46,7 +49,9 @@ function parseISODate(str) {
   if (!str || typeof str !== "string") return new Date(NaN);
   const parts = str.split("-");
   if (parts.length !== 3) return new Date(NaN);
-  const [y, m, d] = parts.map(n => parseInt(n, 10));
+  const y = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  const d = parseInt(parts[2], 10);
   return new Date(y, m - 1, d);
 }
 
@@ -263,18 +268,20 @@ function getSeason(date) {
 }
 
 // 今天有哪些“节日标签”
-function todayFestivals(date, userConfig) {
+// ====================== 核心修复：节日检测组合包 ======================
+
+// 1. 今天有哪些“节日标签”
+async function todayFestivals(date, userConfig) {
   const m = date.getMonth() + 1;
   const d = date.getDate();
   const res = [];
 
-  // ===== 1. 固定规则部分：新年 / 圣诞 =====
+  // 固定节日
   if (m === 1 && d === 1) res.push("new-year");
   if (m === 12 && d === 25) res.push("christmas");
 
   const cfg = userConfig || {};
 
-  // 小工具：给一个 {year,month,day} + tag，看今天是不是那一天，是就 push
   function addFixedDateFestival(dateObj, tag) {
     if (!dateObj || typeof dateObj !== "object") return;
     const bm = dateObj.month;
@@ -285,36 +292,35 @@ function todayFestivals(date, userConfig) {
     }
   }
 
-  // 2.1 用户生日（兼容旧字段 birthday）
+  // 用户配置的纪念日
   const userBirthday = cfg.userBirthday || cfg.birthday || null;
   addFixedDateFestival(userBirthday, "user-birthday");
-
-  // 2.2 伙伴生日
   addFixedDateFestival(cfg.partnerBirthday, "partner-birthday");
-
-  // 2.3 纪念日（Anniversary）
   addFixedDateFestival(cfg.Anniversary, "anniversary");
 
-  // ===== 3. 苹果日历里的节日 / 节气 =====
-  const calFestivals = festivalsFromAppleCalendar(date, cfg);
-  for (const f of calFestivals) {
-    if (!res.includes(f)) {
-      res.push(f);
+  // 【关键】去苹果日历里抓节日
+  try {
+    const calFestivals = await festivalsFromAppleCalendar(date, cfg);
+    for (const f of calFestivals) {
+      if (!res.includes(f)) {
+        res.push(f);
+      }
     }
+  } catch (e) {
+    console.log("获取日历节日失败: " + e);
   }
 
   return res;
 }
 
-// ====================== 从苹果日历里拿节日事件 ======================
-
+// 辅助工具：清理标题
 function slugifyFestivalTitle(title) {
   if (!title) return null;
-  return title.trim();  // 原样返回（中文/英文都可）
+  return title.trim();
 }
 
-// 从配置指定的日历里，拿“今天”的所有事件标题 → festival 标签数组
-function festivalsFromAppleCalendar(today, userConfig) {
+// 2.【霸道版】从苹果日历里拿节日事件
+async function festivalsFromAppleCalendar(today, userConfig) {
   const result = [];
   const cfg = userConfig || {};
   const wantedNames = Array.isArray(cfg.holidayCalendars)
@@ -323,32 +329,60 @@ function festivalsFromAppleCalendar(today, userConfig) {
 
   if (wantedNames.length === 0) return result;
 
-  // 1. 拿到所有日历（兼容不同 Scriptable 版本）
-  const allCalsRaw = Calendar.forEvents();
-  const allCals = Array.isArray(allCalsRaw)
-    ? allCalsRaw
-    : (allCalsRaw ? [allCalsRaw] : []);
+  // 1. 获取手机里所有的日历（最稳妥的方法）
+  let allCalendars = [];
+  try {
+    allCalendars = await Calendar.forEvents();
+  } catch (e) {
+    console.log("无法读取日历权限: " + e);
+    return result;
+  }
+  
+  // 2. 手动筛选出你要的那几个（中国大陆节假日、UK Holidays）
+  // 只要名字里包含你写的关键字，就算匹配上
+  const targetCals = allCalendars.filter(cal => {
+    return wantedNames.some(wantedName => 
+      cal.title === wantedName || cal.title.includes(wantedName)
+    );
+  });
 
-  const targetCals = allCals.filter(c => wantedNames.includes(c.title));
+  if (targetCals.length === 0) {
+    console.log("⚠️ 警告：没找到任何匹配的日历，请检查 config 里的名字。");
+    // 找不到指定日历时，不报错，直接返回空
+    return result;
+  }
 
-  if (targetCals.length === 0) return result;
-
-  // 2. 计算今天的起止时间
+  // 3. 设定时间范围（今天 0点 到 明天 0点）
   const start = startOfDay(today);
   const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
 
-  // 3. 拿事件
-  const events = CalendarEvent.between(start, end, targetCals);
-
-  for (const ev of events) {
-    const id = slugifyFestivalTitle(ev.title);
-    if (id && !result.includes(id)) {
-      result.push(id);
+  // 4. 抓取事件
+  try {
+    const events = await CalendarEvent.between(start, end, targetCals);
+    
+    // 调试日志
+    if (events.length > 0) {
+      console.log(`📅 [调试] 抓到了 ${events.length} 个事件：`);
+      events.forEach(e => console.log(` - [${e.calendar.title}] ${e.title}`));
     }
+
+    for (const ev of events) {
+      const id = slugifyFestivalTitle(ev.title);
+      // 排除掉空标题
+      if (id && !result.includes(id)) {
+        result.push(id);
+      }
+    }
+  } catch (e) {
+    console.log("读取日历事件失败: " + e);
   }
 
   return result;
 }
+
+// ====================== 组合包结束 ======================
+
+
 
 // ====================== 生理期（目前只参与“活动时间”的小贴士选择） ======================
 
@@ -486,11 +520,12 @@ function computeAnnivTimes(anniv, today) {
 }
 
 // ====================== 选语录：主语录管线 ======================
-
-function pickMainQuote(quotes, now, userConfig) {
-  const tod = getTimeOfDay(now);          // breakfast / lunch / afternoon / ...
-  const season = getSeason(now);          // spring / summer / autumn / winter
-  const festivalsToday = todayFestivals(now, userConfig);
+async function pickMainQuote(quotes, now, userConfig) {
+  const tod = getTimeOfDay(now);
+  const season = getSeason(now);
+  
+  const festivalsToday = await todayFestivals(now, userConfig);
+  
   const isFestivalDay =
     Array.isArray(festivalsToday) && festivalsToday.length > 0;
 
@@ -503,15 +538,14 @@ function pickMainQuote(quotes, now, userConfig) {
     };
   }
 
-  // 1. 先做“季节硬约束”：写了 season 但不含当前季节的语录，今天不考虑
+  // 1. 季节过滤
   const seasonEligible = quotes.filter(q => {
     const qSeason = Array.isArray(q.season) ? q.season : null;
-    if (!qSeason || qSeason.length === 0) return true;    // 四季通用
-    return qSeason.includes(season);                      // 必须包含当前季节
+    if (!qSeason || qSeason.length === 0) return true;
+    return qSeason.includes(season);
   });
 
   if (seasonEligible.length === 0) {
-    // 极端情况：没有任何当季语录，就退回全库兜底
     return {
       quote: randomChoice(quotes),
       tod,
@@ -520,30 +554,25 @@ function pickMainQuote(quotes, now, userConfig) {
     };
   }
 
-  // 2. 按“今天是不是它的节日”拆成两类：
-  //    - festivalActive：有 festival 且与今天 festivalsToday 有交集 → 只有今天会生效
-  //    - normal：完全没写 festival → 永远当普通语录
+  // 2. 区分节日语录和普通语录
   const festivalActive = [];
   const normal = [];
 
   for (const q of seasonEligible) {
     const hasFest = Array.isArray(q.festival) && q.festival.length > 0;
 
-    if (isFestivalDay && hasFest && arraysIntersect(q.festival, festivalsToday)) {
-      // 只有在“今天是节日”且确实命中这个节日时，才作为节日候选
+    if (
+      isFestivalDay &&
+      hasFest &&
+      arraysIntersect(q.festival, festivalsToday)
+    ) {
       festivalActive.push(q);
     } else if (!hasFest) {
-      // 永远的普通语录：从来没写 festival
       normal.push(q);
-    } else {
-      // 写了 festival 但：
-      //  - 今天不是节日，或者
-      //  - 今天是节日但跟它无关
-      // → 这种语录今天一律忽略，不参与兜底
     }
   }
 
-  // 3. timeOfDay 过滤：不填 timeOfDay = 全天通用
+  // 3. 时段过滤
   function filterByTod(list) {
     if (!list || list.length === 0) return [];
     return list.filter(q => {
@@ -553,38 +582,28 @@ function pickMainQuote(quotes, now, userConfig) {
     });
   }
 
-  const festTod   = filterByTod(festivalActive); // 节日 + tod 匹配
-  const normalTod = filterByTod(normal);         // 非节日 + tod 匹配
+  const festTod = filterByTod(festivalActive);
+  const normalTod = filterByTod(normal);
 
   let pool = [];
 
+  // 4. 最终池子组装
   if (festTod.length > 0) {
-    // 今天有“节日 + tod 匹配”的语录 → 节日+普通混合
     if (normalTod.length > 0) {
       const weighted = [];
-      // 节日语录各放两份，普通语录各放一份 → 节日大约 2/3 概率、普通 1/3
-      for (const q of festTod) {
-        weighted.push(q, q);
-      }
-      for (const q of normalTod) {
-        weighted.push(q);
-      }
+      for (const q of festTod) weighted.push(q, q); // 节日语录双倍权重
+      for (const q of normalTod) weighted.push(q);
       pool = weighted;
     } else {
-      // 只有节日语录匹配 tod → 只能全用节日语录
       pool = festTod;
     }
   } else {
-    // 没有任何节日语录（或 tod 不匹配）：
-    //  - 非节日当天：自然只用 normal / normalTod
-    //  - 节日当天但没写对应模板：当普通日子处理
+    // 之前你的代码这里贴错了，请用这一段修正：
     if (normalTod.length > 0) {
       pool = normalTod;
     } else if (normal.length > 0) {
-      // tod 也对不上，就放宽 tod，只用“非节日 + 当季”的全库
       pool = normal;
     } else {
-      // 极端兜底：如果所有语录都写了 festival，那只能不管节日逻辑了
       pool = seasonEligible;
     }
   }
@@ -598,6 +617,7 @@ function pickMainQuote(quotes, now, userConfig) {
     festivalsToday
   };
 }
+
 
 // ====================== 选语录：天气 / 贴心小提示管线 ======================
 //
@@ -662,7 +682,6 @@ function pickWeatherTip(tips, now, tipMode, currentWeather, tomorrowWeather, per
         const unique = [...new Set(merged)];
         candidates = unique;
       }
-      // 否则就保持原 candidates 不动，当成“天气条件没命中任何带标签的 tip”
     }
   } else if (tipMode === "night") {
     if (tomorrowWeather) {
@@ -740,7 +759,7 @@ function renderText(text, userConfig, weather) {
   const userBirthday = userConfig.userBirthday || userConfig.birthday || null;
   const userAge = computeAge(userBirthday, today);
   if (userAge !== null) {
-    t = t.replace(/{{\s*(age|userAge)\s*}}/g, userAge.toString());
+    t = t.replace(/{{\s*(age|userAge)\s*}}/g, String(userAge));
   } else {
     t = t.replace(/{{\s*(age|userAge)\s*}}/g, "");
   }
@@ -748,7 +767,7 @@ function renderText(text, userConfig, weather) {
   // 伙伴年龄：{{partnerAge}}
   const partnerAge = computeAge(userConfig.partnerBirthday, today);
   if (partnerAge !== null) {
-    t = t.replace(/{{\s*partnerAge\s*}}/g, partnerAge.toString());
+    t = t.replace(/{{\s*partnerAge\s*}}/g, String(partnerAge));
   } else {
     t = t.replace(/{{\s*partnerAge\s*}}/g, "");
   }
@@ -756,7 +775,7 @@ function renderText(text, userConfig, weather) {
   // 在一起几年：{{annivYears}}
   const annivYears = computeAnnivYears(userConfig.Anniversary, today);
   if (annivYears !== null) {
-    t = t.replace(/{{\s*annivYears\s*}}/g, annivYears.toString());
+    t = t.replace(/{{\s*annivYears\s*}}/g, String(annivYears));
   } else {
     t = t.replace(/{{\s*annivYears\s*}}/g, "");
   }
@@ -764,14 +783,14 @@ function renderText(text, userConfig, weather) {
   // 第几次：{{annivTimes}} / {{annivAge}}（兼容两个名字）
   const annivTimes = computeAnnivTimes(userConfig.Anniversary, today);
   if (annivTimes !== null) {
-    t = t.replace(/{{\s*(annivTimes|annivAge)\s*}}/g, annivTimes.toString());
+    t = t.replace(/{{\s*(annivTimes|annivAge)\s*}}/g, String(annivTimes));
   } else {
     t = t.replace(/{{\s*(annivTimes|annivAge)\s*}}/g, "");
   }
 
   // {{temp}}
   if (weather && typeof weather.temp === "number") {
-    const tempStr = Math.round(weather.temp).toString();
+    const tempStr = String(Math.round(weather.temp));
     t = t.replace(/{{\s*temp\s*}}/g, tempStr);
   } else {
     t = t.replace(/{{\s*temp\s*}}/g, "");
@@ -842,7 +861,7 @@ function footerText(date, season, festivalsToday, weather) {
 
   if (seasonStr) parts.push(seasonStr);
 
-  if (festivalsToday.length > 0) {
+  if (festivalsToday && festivalsToday.length > 0) {
     parts.push(festivalsToday[0]);
   }
 
@@ -893,6 +912,7 @@ async function createWidget(mainContext, userConfig, tipResult) {
     tipText.font = Font.systemFont(11);
     tipText.textColor = COLOR_FOOTER;
     tipText.textOpacity = 0.9;
+    tipText.lineLimit = 0;
   }
 
   widget.addSpacer(8);
@@ -973,7 +993,7 @@ async function main() {
     const quotes = await loadQuotes();
     const tips = await loadWeatherTips();
 
-    const mainContext = pickMainQuote(quotes, now, userConfig);
+    const mainContext = await pickMainQuote(quotes, now, userConfig);
     mainContext.weather = currentWeather;
     mainContext.periodInfo = periodInfo;
 
@@ -997,8 +1017,9 @@ async function main() {
     } else {
       await widget.presentMedium();
     }
+  } finally {
+    Script.complete();
   }
-  Script.complete();
 }
 
-await main();
+main();
