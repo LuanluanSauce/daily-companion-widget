@@ -443,8 +443,6 @@ function computePeriodPhase(today, periodConfig) {
 
 // ====================== 年龄计算 ======================
 
-// ====================== 年龄计算 ======================
-
 function computeAge(birthday, today) {
   if (!birthday || typeof birthday !== "object") return null;
 
@@ -471,7 +469,7 @@ function computeAge(birthday, today) {
   return age;
 }
 
-// 1) 在一起几年（整数年数），用 computeAge 直接算就好：
+// 1) 在一起几年（整数年数）
 function computeAnnivYears(anniv, today) {
   return computeAge(anniv, today);
 }
@@ -481,8 +479,6 @@ function computeAnnivTimes(anniv, today) {
   const years = computeAnnivYears(anniv, today);
   if (years === null) return null;
 
-  // 如果今天还没在一起（today < anniv），上面 years 本身就会是 null；
-  // 这里再保险一下也无妨：
   const startDate = new Date(anniv.year, anniv.month - 1, anniv.day);
   if (isNaN(startDate.getTime()) || today < startDate) return null;
 
@@ -490,6 +486,7 @@ function computeAnnivTimes(anniv, today) {
 }
 
 // ====================== 选语录：主语录管线 ======================
+
 function pickMainQuote(quotes, now, userConfig) {
   const tod = getTimeOfDay(now);          // breakfast / lunch / afternoon / ...
   const season = getSeason(now);          // spring / summer / autumn / winter
@@ -562,7 +559,7 @@ function pickMainQuote(quotes, now, userConfig) {
   let pool = [];
 
   if (festTod.length > 0) {
-    // ✅ 今天有“节日 + tod 匹配”的语录 → 节日+普通混合
+    // 今天有“节日 + tod 匹配”的语录 → 节日+普通混合
     if (normalTod.length > 0) {
       const weighted = [];
       // 节日语录各放两份，普通语录各放一份 → 节日大约 2/3 概率、普通 1/3
@@ -578,119 +575,16 @@ function pickMainQuote(quotes, now, userConfig) {
       pool = festTod;
     }
   } else {
-    // ❗没有任何节日语录（或 tod 不匹配）被选中时：
-    //    - 非节日当天：这里自然只会用 normal / normalTod
-    //    - 节日当天但没写对应模板：当普通日子处理
+    // 没有任何节日语录（或 tod 不匹配）：
+    //  - 非节日当天：自然只用 normal / normalTod
+    //  - 节日当天但没写对应模板：当普通日子处理
     if (normalTod.length > 0) {
       pool = normalTod;
     } else if (normal.length > 0) {
       // tod 也对不上，就放宽 tod，只用“非节日 + 当季”的全库
       pool = normal;
     } else {
-      // 极端兜底：你真的把所有语录都写了 festival 的话，就只能不管节日逻辑了
-      pool = seasonEligible;
-    }
-  }
-
-  const chosenQuote = randomChoice(pool);
-
-  return {
-    quote: chosenQuote,
-    tod,
-    season,
-    festivalsToday
-  };
-}
-  const tod = getTimeOfDay(now);          // breakfast / lunch / afternoon / ...
-  const season = getSeason(now);          // spring / summer / autumn / winter
-  const festivalsToday = todayFestivals(now, userConfig);
-
-  if (!Array.isArray(quotes) || quotes.length === 0) {
-    return {
-      quote: null,
-      tod,
-      season,
-      festivalsToday
-    };
-  }
-
-  // 1. 先做“季节硬约束”：写了 season 但不含当前季节的语录，今天不考虑
-  const seasonEligible = quotes.filter(q => {
-    const qSeason = Array.isArray(q.season) ? q.season : null;
-    if (!qSeason || qSeason.length === 0) return true;    // 四季通用
-    return qSeason.includes(season);                      // 必须包含当前季节
-  });
-
-  if (seasonEligible.length === 0) {
-    // 极端情况：没有任何当季语录，就退回全库兜底
-    return {
-      quote: randomChoice(quotes),
-      tod,
-      season,
-      festivalsToday
-    };
-  }
-
-  // 2. 按“今天是不是它的节日”拆成两类：
-  //    - festivalActive：有 festival 且与今天 festivalsToday 有交集 → 只有今天会生效
-  //    - normal：完全没写 festival → 永远当普通语录
-  const festivalActive = [];
-  const normal = [];
-
-  for (const q of seasonEligible) {
-    const hasFest = Array.isArray(q.festival) && q.festival.length > 0;
-    const matchFest = hasFest && arraysIntersect(q.festival, festivalsToday);
-
-    if (matchFest) {
-      festivalActive.push(q);
-    } else if (!hasFest) {
-      normal.push(q);
-    } else {
-      // hasFest && !matchFest → 今天不是它的节日，忽略
-    }
-  }
-
-  // 3. timeOfDay 过滤：不填 timeOfDay = 全天通用
-  function filterByTod(list) {
-    if (!list || list.length === 0) return [];
-    return list.filter(q => {
-      const qTod = Array.isArray(q.timeOfDay) ? q.timeOfDay : null;
-      const todOk = !qTod || qTod.length === 0 || qTod.includes(tod);
-      return todOk;
-    });
-  }
-
-  const festTod    = filterByTod(festivalActive); // 节日 + tod 匹配
-  const normalTod  = filterByTod(normal);         // 非节日 + tod 匹配
-  const seasonTod  = filterByTod(seasonEligible); // 整个当季 + tod 匹配（兜底用）
-
-  let pool = [];
-
-  if (festTod.length > 0) {
-    // ⬇️ 今天有“节日+tod 匹配”的语录 → 节日+普通混合
-    if (normalTod.length > 0) {
-      const weighted = [];
-      // 节日语录各放两份，普通语录各放一份 → 节日大约 2/3 概率、普通 1/3
-      for (const q of festTod) {
-        weighted.push(q, q);
-      }
-      for (const q of normalTod) {
-        weighted.push(q);
-      }
-      pool = weighted;
-    } else {
-      // 只有节日语录匹配 tod → 只能全用节日语录
-      pool = festTod;
-    }
-  } else {
-    // ⬇️ 今天虽然可能是节日，但：
-    //    - 你没写对应 festival，或者
-    //    - 写了但是 timeOfDay 不匹配
-    // 那就当成普通日子：按 season + tod 正常选
-    if (seasonTod.length > 0) {
-      pool = seasonTod;
-    } else {
-      // 极端兜底：连 tod 也匹配不到，就在当季全库里随便选一条
+      // 极端兜底：如果所有语录都写了 festival，那只能不管节日逻辑了
       pool = seasonEligible;
     }
   }
@@ -801,7 +695,7 @@ function pickWeatherTip(tips, now, tipMode, currentWeather, tomorrowWeather, per
     } else {
       weatherForTip = null; // 拿不到明天气象时，不注入 temp / weather
     }
-  }else {
+  } else {
     // 活动时间：完全不看天气，用生理期状态挑“贴心小贴士”
     weatherForTip = currentWeather || null;
     const phase = periodInfo && periodInfo.phase ? periodInfo.phase : "none";
