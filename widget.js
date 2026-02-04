@@ -323,8 +323,12 @@ function festivalsFromAppleCalendar(today, userConfig) {
 
   if (wantedNames.length === 0) return result;
 
-  // 1. 拿到所有日历
-  const allCals = Calendar.forEvents();
+  // 1. 拿到所有日历（兼容不同 Scriptable 版本）
+  const allCalsRaw = Calendar.forEvents();
+  const allCals = Array.isArray(allCalsRaw)
+    ? allCalsRaw
+    : (allCalsRaw ? [allCalsRaw] : []);
+
   const targetCals = allCals.filter(c => wantedNames.includes(c.title));
 
   if (targetCals.length === 0) return result;
