@@ -41,8 +41,8 @@
 
 ```json
 {
-  "userNames": ["你的昵称"],
-  "partnerNames": ["对方的昵称"],
+  "userNames": ["你的昵称"],  //可填写多个，相同概率抽中
+  "partnerNames": ["对方的昵称"],  //可填写多个，相同概率抽中
   "userBirthday": { "year": 2000, "month": 1, "day": 1 },
   "partnerBirthday": { "year": 2000, "month": 1, "day": 1 },
   "Anniversary": { "year": 2020, "month": 5, "day": 20 },
