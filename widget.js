@@ -279,7 +279,7 @@ async function todayFestivals(date, userConfig) {
   // 固定节日
   if (m === 1 && d === 1) res.push("new-year");
   if (m === 12 && d === 25) res.push("christmas");
-
+  if (m === 5 && d === 20) res.push("520");
   const cfg = userConfig || {};
 
   function addFixedDateFestival(dateObj, tag) {
@@ -610,6 +610,7 @@ async function pickMainQuote(quotes, now, userConfig) {
 //           如果拿不到明天气象，就不按天气筛选，也不给 temp/weather（避免误导）
 //   - 活动时间：不看天气，用 periodPhase + 小贴士；生理期相关只在这里出现，不放主语录
 
+// ====================== 选语录：天气 / 贴心小提示管线（修复版） ======================
 function pickWeatherTip(tips, now, tipMode, currentWeather, tomorrowWeather, periodInfo) {
   if (!Array.isArray(tips) || tips.length === 0) {
     return { tip: null, weatherForTip: null };
@@ -617,93 +618,88 @@ function pickWeatherTip(tips, now, tipMode, currentWeather, tomorrowWeather, per
 
   let candidates = tips;
 
-  // 先按 tipMode 粗分：morning / daytime / night
+  // 1. 先按 tipMode 粗分：morning / daytime / night
   candidates = candidates.filter(t => {
     const modes = Array.isArray(t.tipMode) ? t.tipMode : null;
     return !modes || modes.length === 0 || modes.includes(tipMode);
   });
 
-  if (candidates.length === 0) {
-    candidates = tips; // 兜底：忽略 tipMode
-  }
+  if (candidates.length === 0) candidates = tips; // 兜底
 
   let weatherForTip = null;
+  let hasValidWeather = false; // 新增：标记是否有有效天气
 
   if (tipMode === "morning") {
     weatherForTip = currentWeather || null;
-    if (weatherForTip) {
-      const tempTags = Array.isArray(weatherForTip.tempTags) ? weatherForTip.tempTags : [];
-      const conditionTags = Array.isArray(weatherForTip.conditionTags) ? weatherForTip.conditionTags : [];
-
-      // 分别找“按天气现象命中的”和“按体感温度命中的”
-      const condMatches = conditionTags.length > 0
-        ? candidates.filter(t => {
-            const tc = Array.isArray(t.weatherCondition) ? t.weatherCondition : null;
-            return tc && arraysIntersect(tc, conditionTags);
-          })
-        : [];
-
-      const tempMatches = tempTags.length > 0
-        ? candidates.filter(t => {
-            const tf = Array.isArray(t.tempFeeling) ? t.tempFeeling : null;
-            return tf && arraysIntersect(tf, tempTags);
-          })
-        : [];
-
-      let merged = [];
-      if (condMatches.length > 0) merged = merged.concat(condMatches);
-      if (tempMatches.length > 0) merged = merged.concat(tempMatches);
-
-      if (merged.length > 0) {
-        // 去重，避免某条同时满足两种标签时权重翻倍
-        const unique = [...new Set(merged)];
-        candidates = unique;
-      }
-    }
+    if (weatherForTip) hasValidWeather = true;
   } else if (tipMode === "night") {
     if (tomorrowWeather) {
       weatherForTip = tomorrowWeather;
-      const tempTags = Array.isArray(tomorrowWeather.tempTags) ? tomorrowWeather.tempTags : [];
-      const conditionTags = Array.isArray(tomorrowWeather.conditionTags) ? tomorrowWeather.conditionTags : [];
-
-      const condMatches = conditionTags.length > 0
-        ? candidates.filter(t => {
-            const tc = Array.isArray(t.weatherCondition) ? t.weatherCondition : null;
-            return tc && arraysIntersect(tc, conditionTags);
-          })
-        : [];
-
-      const tempMatches = tempTags.length > 0
-        ? candidates.filter(t => {
-            const tf = Array.isArray(t.tempFeeling) ? t.tempFeeling : null;
-            return tf && arraysIntersect(tf, tempTags);
-          })
-        : [];
-
-      let merged = [];
-      if (condMatches.length > 0) merged = merged.concat(condMatches);
-      if (tempMatches.length > 0) merged = merged.concat(tempMatches);
-
-      if (merged.length > 0) {
-        const unique = [...new Set(merged)];
-        candidates = unique;
-      }
+      hasValidWeather = true;
     } else {
-      weatherForTip = null; // 拿不到明天气象时，不注入 temp / weather
+      weatherForTip = null; // 拿不到明天气象
+      hasValidWeather = false;
     }
   } else {
-    // 活动时间：完全不看天气，用生理期状态挑“贴心小贴士”
+    // 活动时间：用当前天气，但主要看生理期
     weatherForTip = currentWeather || null;
-    const phase = periodInfo && periodInfo.phase ? periodInfo.phase : "none";
+    hasValidWeather = !!weatherForTip;
+  }
 
+  // 2. 核心修复：如果没有有效天气数据，剔除所有“必须有天气/温度才能发”的语录
+  if (!hasValidWeather && tipMode !== "daytime") {
+    // 过滤掉所有设定了 weatherCondition 或 tempFeeling 的语录
+    // 只保留通用语录（即这两个字段都为空的）
+    candidates = candidates.filter(t => {
+      const hasCond = Array.isArray(t.weatherCondition) && t.weatherCondition.length > 0;
+      const hasTemp = Array.isArray(t.tempFeeling) && t.tempFeeling.length > 0;
+      return !hasCond && !hasTemp;
+    });
+  }
+
+  // 3. 正常筛选逻辑（如果有天气数据）
+  if (hasValidWeather) {
+    if (tipMode === "morning" || tipMode === "night") {
+        const tempTags = Array.isArray(weatherForTip.tempTags) ? weatherForTip.tempTags : [];
+        const conditionTags = Array.isArray(weatherForTip.conditionTags) ? weatherForTip.conditionTags : [];
+
+        const condMatches = conditionTags.length > 0
+          ? candidates.filter(t => {
+              const tc = Array.isArray(t.weatherCondition) ? t.weatherCondition : null;
+              return tc && arraysIntersect(tc, conditionTags);
+            })
+          : [];
+
+        const tempMatches = tempTags.length > 0
+          ? candidates.filter(t => {
+              const tf = Array.isArray(t.tempFeeling) ? t.tempFeeling : null;
+              return tf && arraysIntersect(tf, tempTags);
+            })
+          : [];
+
+        let merged = [];
+        if (condMatches.length > 0) merged = merged.concat(condMatches);
+        if (tempMatches.length > 0) merged = merged.concat(tempMatches);
+
+        if (merged.length > 0) {
+          candidates = [...new Set(merged)];
+        }
+    }
+  } 
+  
+  // 4. 活动时间特殊逻辑（生理期）
+  if (tipMode === "daytime") {
+    const phase = periodInfo && periodInfo.phase ? periodInfo.phase : "none";
     const phaseFiltered = candidates.filter(t => {
       const pp = Array.isArray(t.periodPhase) ? t.periodPhase : null;
       return !pp || pp.length === 0 || pp.includes(phase);
     });
+    if (phaseFiltered.length > 0) candidates = phaseFiltered;
+  }
 
-    if (phaseFiltered.length > 0) {
-      candidates = phaseFiltered;
-    }
+  // 兜底：如果过滤完没东西了，就别发了，或者随机发一条不看条件的
+  if (candidates.length === 0) {
+      return { tip: null, weatherForTip: null };
   }
 
   const tip = randomChoice(candidates) || null;
@@ -765,6 +761,14 @@ function renderText(text, userConfig, weather) {
     t = t.replace(/{{\s*(annivTimes|annivAge)\s*}}/g, "");
   }
 
+  // 新增：在一起总天数 {{daysTogether}} ✨✨✨
+  const days = computeDaysTogether(userConfig.Anniversary, today);
+  if (days !== null) {
+    t = t.replace(/{{\s*daysTogether\s*}}/g, String(days));
+  } else {
+    t = t.replace(/{{\s*daysTogether\s*}}/g, "");
+  }
+
   // {{temp}}
   if (weather && typeof weather.temp === "number") {
     const tempStr = String(Math.round(weather.temp));
@@ -782,6 +786,37 @@ function renderText(text, userConfig, weather) {
   }
 
   return t;
+}
+
+// 在一起总天数（从第1天开始算）
+function computeDaysTogether(anniv, today) {
+  if (!anniv || typeof anniv !== "object") return null;
+
+  const y = anniv.year;
+  const m = anniv.month;
+  const d = anniv.day;
+
+  if (!y || !m || !d) return null;
+
+  // 构造纪念日日期（注意月份要 -1）
+  const startDate = new Date(y, m - 1, d);
+  // 统一把时间归零，只算日期差
+  const start = startOfDay(startDate);
+  const now = startOfDay(today);
+
+  if (isNaN(start.getTime())) return null;
+
+  // 计算毫秒差
+  const diffTime = now.getTime() - start.getTime();
+  // 换算成天数
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+  // 如果还没到纪念日，返回 null
+  if (diffDays < 0) return null;
+
+  // 习惯上“在一起”是包含当天的，所以 +1
+  // 比如：1月1日在一起，1月1日当天就是“第 1 天”
+  return diffDays + 1;
 }
 
 // ====================== 背景处理 ======================

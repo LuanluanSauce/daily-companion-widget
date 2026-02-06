@@ -248,6 +248,12 @@
   },
 
   {
+    "id": "cn-520-1",
+    "text": "这是“520”当天的语录模板：festival 标签为“520”，可以用 {{name}}、{{partner}}、{{annivYears}}表示“多少周年”、{{annivTimes}} 表示“我们一起过的第几次520”、{{daysTogether}}表示在一起第几天，自行选用非强制。",
+    "festival": ["520"]
+  },
+
+  {
     "id": "cn-duanwujie-1",
     "text": "这是“端午节”当天的语录模板：festival 标签为“端午节”，可以写粽子、糯米和江水，用 {{name}}、{{partner}} 提醒“今天也要记得吃一点甜的东西犒劳自己”, 也可以用 {{annivTimes}}。",
     "festival": ["端午节"]
@@ -285,7 +291,7 @@
 
   {
     "id": "valentines-main-1",
-    "text": "这是“Valentine’s Day”当天的语录模板：festival 标签为“Valentine’s Day”，适合写偏情书一点的句子，可以用 {{annivYears}} 或 {{annivTimes}} 描述“已经走过多久(周年)” 或 “这是我们第几个情人节”，主语用 {{name}}、{{partner}}。",
+    "text": "这是“Valentine’s Day”当天的语录模板：festival 标签为“Valentine’s Day”，适合写偏情书一点的句子，可以用 {{annivYears}} 或 {{annivTimes}} 描述“已经走过多久(周年)” 或 “这是我们第几个情人节”，{{daysTogether}}表示在一起第几天，主语用 {{name}}、{{partner}}。",
     "festival": ["Valentine’s Day"]
   },
 
@@ -326,13 +332,13 @@
 
   {
     "id": "anniversary-main-years-1",
-    "text": "这是“在一起纪念日当天”的语录模板：可以用 {{annivYears}} 表示“已经在一起满了几年”，以及 {{annivTimes}} 表示“这是在一起的第几年”。",
+    "text": "这是“在一起纪念日当天”的语录模板：可以用 {{annivYears}} 表示“已经在一起满了几年”，以及 {{annivTimes}} 表示“这是在一起的第几年”，{{daysTogether}}表示在一起第几天。",
     "festival": ["anniversary"]
   },
   
   {
     "id": "anniversary-seasonal-mood-1",
-    "text": "这是“平常日子里突然想提到在一起多少年的碎碎念”的语录模板：不限定日期，只要你愿意都可以出现，可以用 {{annivYears}} 或 {{annivTimes}} 做背景数字。",
+    "text": "这是“平常日子里突然想提到在一起多少年的碎碎念”的语录模板：不限定日期，只要你愿意都可以出现，可以用 {{annivYears}} 或 {{annivTimes}} 做背景数字，{{daysTogether}}表示在一起第几天。",
     "timeOfDay": [],
     "season": []
   }
